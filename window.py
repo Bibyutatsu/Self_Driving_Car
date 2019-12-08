@@ -14,7 +14,7 @@ THICKNESS = 100
 STROKE = 1
 MOUSE_pressed = False
 BUTTON_pressed = []
-POPULATION = 15
+POPULATION = 10
 FPS = 60
 
 # Pyglet
@@ -41,6 +41,12 @@ collided = []
 def on_draw():
     window.clear()
     space.debug_draw(options)
+    if epoch_to_show is not None:
+        epoch_to_show.draw()
+    if timestep_to_show is not None:
+        timestep_to_show.draw()
+    if counter_to_show is not None:
+        counter_to_show.draw()
 
 
 @window.event
@@ -63,14 +69,36 @@ time_counter = 0
 collided = []
 time_step = 5  # In seconds
 epoch = 1
+epoch_to_show = pyglet.text.Label(
+    'Epoch: {0}'.format(epoch),
+    font_name='Times New Roman',
+    font_size=20,
+    x=WIDTH // 6,
+    y=HEIGHT - 20,
+    anchor_x='center', anchor_y='center')
+
+timestep_to_show = pyglet.text.Label(
+    'Timestep: {0}'.format(time_step),
+    font_name='Times New Roman',
+    font_size=20,
+    x=WIDTH // 2,
+    y=HEIGHT - 20,
+    anchor_x='center', anchor_y='center')
+
+counter_to_show = pyglet.text.Label(
+    '{0}'.format(time_counter),
+    font_name='Times New Roman',
+    font_size=20,
+    x=5 * WIDTH // 6,
+    y=HEIGHT - 20,
+    anchor_x='center', anchor_y='center')
 
 
 # Update Function
 def update(dt):
-    global time_counter, collided, time_step, epoch
+    global time_counter, collided, time_step, epoch, epoch_to_show
     time_counter += 1
     space.step(dt)
-
     for i in range(len(cars)):
         if cars[i].car_collided is False:
             cars[i].drive()
@@ -87,6 +115,9 @@ def update(dt):
         time_counter = 0
         collided = []
         epoch += 1
+        epoch_to_show.text = 'Epoch: {0}'.format(epoch)
+        timestep_to_show.text = 'Timestep: {0}'.format(time_step)
+    counter_to_show.text = str(time_counter // FPS + 1)
 
 
 # Main function

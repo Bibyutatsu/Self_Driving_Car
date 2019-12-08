@@ -12,22 +12,44 @@ def body_col_begin(arbiter, space, data):
     return True
 
 
+def line_intersection(line1, line2):
+    xdiff = (line1[0][0] - line1[1][0], line2[0][0] - line2[1][0])
+    ydiff = (line1[0][1] - line1[1][1], line2[0][1] - line2[1][1])
+
+    def det(a, b):
+        return a[0] * b[1] - a[1] * b[0]
+
+    div = det(xdiff, ydiff)
+    if div == 0:
+        return None
+
+    d = (det(*line1), det(*line2))
+    x = det(d, xdiff) / div
+    y = det(d, ydiff) / div
+    return Vec2d(x, y)
+
+
 class Car:
     def __init__(self, space, x, y, body_no, environment):
         # Space
         self.space = space
         self.environment = environment
+
         # Car Properties
         self.init_position = x, y
         self.init_angle = 0
         self.car_size = 10
         self.car_dimension = 40, 20
-        self.car_color = 0, 255, 0
+        self.car_color = (0, 255, 0)
         self.car_elasticity = 0
+
         # Car sensors
         self.sensors = []
-        self.sensor_distance = [10 for _ in range(5)]
+        self.sensor_range = 100
+        self.sensor_distance = [self.sensor_range for _ in range(5)]
         self.sensor_angles = [0, pi / 6, -pi / 6, pi / 3, -pi / 3]
+        self.sensor_visible = False
+
         # Collision properties
         self.body_collision_type = body_no
         self.sensor_collision_type = [3, 4, 5, 6, 7]
@@ -89,10 +111,16 @@ class Car:
         sensor_body.position = (vertex[1] + vertex[0]) / 2
         sensor_start = (0, 0)
         sensor_end = distance * sensor_direction
-        sensor_shape = pymunk.Segment(sensor_body, sensor_start, sensor_end, 1)
-        sensor_shape.collision_type = collision_type
-        self.space.add(sensor_body, sensor_shape)
-        self.sensors.append([sensor_body, sensor_shape])
+        if self.sensor_visible is True:
+            sensor_shape = pymunk.Segment(
+                sensor_body, sensor_start, sensor_end, 1)
+            sensor_shape.collision_type = collision_type
+            sensor_shape.color = (255, 255, 0)
+            self.space.add(sensor_body, sensor_shape)
+            self.sensors.append([sensor_body, sensor_shape])
+        else:
+            self.space.add(sensor_body)
+            self.sensors.append([sensor_body, None])
 
     def sensor_update(self):
         self.sensor_collision_handler()
@@ -101,8 +129,9 @@ class Car:
             self.sensors[i][0].position = (vertex[1] + vertex[0]) / 2
             sensor_direction = Vec2d(1, 0).rotated(
                 self.car_body.angle + self.sensor_angles[i])
-            self.sensors[i][1].unsafe_set_endpoints(
-                (0, 0), self.sensor_distance[i] * sensor_direction)
+            if self.sensor_visible is True:
+                self.sensors[i][1].unsafe_set_endpoints(
+                    (0, 0), self.sensor_distance[i] * sensor_direction)
 
     def create_nose(self):
         self.nose_body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
@@ -129,22 +158,26 @@ class Car:
         for i, sensor in enumerate(self.sensors):
             if i != -1:
                 sensor_is_touching = False
-                sensor_shape = sensor[1]
                 vertex = self.get_vertices()
                 sensor_origin = (vertex[1] + vertex[0]) / 2
+                sensor_direction = Vec2d(1, 0).rotated(
+                    self.car_body.angle + self.sensor_angles[i])
+                sensor_end_point = self.sensor_range * sensor_direction
                 for segments in self.environment:
-                    sensor_contact = sensor_shape.segment_query(
-                        segments.a, segments.b)
+                    sensor_contact = segments.segment_query(
+                        sensor_origin,
+                        sensor_end_point + sensor[0].position)
                     if sensor_contact.shape is not None:
                         # add_debug_point(self.space, sensor_contact.point)
                         self.set_sensor_distance(
                             i,
                             min((sensor_origin - sensor_contact.point).length,
-                                50))
+                                self.sensor_range))
                         sensor_is_touching = True
+                        # add_debug_point(self.space, sensor_origin)
 
                 if sensor_is_touching is False:
-                    self.set_sensor_distance(i, 50)
+                    self.set_sensor_distance(i, self.sensor_range)
 
     def set_sensor_distance(self, index, distance):
         self.sensor_distance[index] = distance
@@ -169,12 +202,14 @@ class Car:
         self.car_body.position = self.init_position
         self.car_body.angle = 0
         vertex = self.get_vertices()
+        self.car_collided = False
+        offset = Vec2d(5, 0).rotated(self.car_body.angle)
+        self.nose_body.position = (vertex[1] + vertex[0]) / 2 - offset
+        self.sensor_distance = [self.sensor_range for _ in range(5)]
         for i in range(len(self.sensors)):
             self.sensors[i][0].position = (vertex[1] + vertex[0]) / 2
             sensor_direction = Vec2d(1, 0).rotated(
                 self.car_body.angle + self.sensor_angles[i])
-            self.sensors[i][1].unsafe_set_endpoints(
-                (0, 0), self.sensor_distance[i] * sensor_direction)
-        self.car_collided = False
-        offset = Vec2d(5, 0).rotated(self.car_body.angle)
-        self.nose_body.position = (vertex[1] + vertex[0]) / 2 - offset
+            if self.sensor_visible is True:
+                self.sensors[i][1].unsafe_set_endpoints(
+                    (0, 0), self.sensor_distance[i] * sensor_direction)
