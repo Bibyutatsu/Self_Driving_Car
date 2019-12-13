@@ -3,6 +3,7 @@ import torch
 import random
 import numpy as np
 import copy
+import os
 
 
 class Network(nn.Module):
@@ -105,7 +106,9 @@ class GA:
         scored_models.sort(key=lambda x: x[1], reverse=True)
         return scored_models
 
-    def evolve_iter(self, cars, sigma=0.05, truncation=10):
+    def evolve_iter(self, cars, sigma=0.05,
+                    truncation=10,
+                    best_model_path=None):
         scored_models = self.get_best_models(cars)
         scores = [s for _, s in scored_models]
         median_score = np.median(scores)
@@ -115,6 +118,13 @@ class GA:
 
         # Elitism
         self.models = [scored_models[0][0]]
+        if best_model_path is not None:
+            unc_model = uncompress_model(self.models[0])
+            if os.path.isdir(best_model_path[0]) is False:
+                os.makedirs(best_model_path[0])
+            torch.save(unc_model, os.path.join(
+                best_model_path[0],
+                'epoch_' + str(best_model_path[1]) + '.pth'))
         for _ in range(self.population):
             self.models.append(copy.deepcopy(random.choice(scored_models)[0]))
             self.models[-1].evolve(sigma)

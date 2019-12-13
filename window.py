@@ -109,7 +109,9 @@ def update(dt):
     if time_counter >= FPS * time_step or len(collided) == POPULATION:
         if epoch % 5 == 0:
             time_step += 5
-        print("Epoch: ", epoch, " Reward stats: ", ai_handle.evolve_iter(cars))
+        print("Epoch: ", epoch, " Reward stats: ", ai_handle.evolve_iter(
+            cars,
+            best_model_path=('./Model', epoch)))
         car_model_management(cars, ai_handle)
         car_reset(cars)
         time_counter = 0

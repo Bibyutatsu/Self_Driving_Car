@@ -2,8 +2,6 @@ import pymunk
 from pymunk import Vec2d
 from math import pi
 
-from utils import add_debug_point
-
 import torch
 
 
