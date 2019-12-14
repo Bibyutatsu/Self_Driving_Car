@@ -99,6 +99,7 @@ def update(dt):
     global time_counter, collided, time_step, epoch, epoch_to_show
     time_counter += 1
     space.step(dt)
+
     for i in range(len(cars)):
         if cars[i].car_collided is False:
             cars[i].drive()

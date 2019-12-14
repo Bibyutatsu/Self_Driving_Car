@@ -53,6 +53,9 @@ class Car:
         self.sensor_collision_type = [3, 4, 5, 6, 7]
         self.car_collided = False
 
+        # Reward properties
+        self.reward_val = 0
+
         # Create
         self.create()
         for distance, angle, collision_type in zip(
@@ -190,11 +193,13 @@ class Car:
         force, angle = self.driver(torch.Tensor(self.sensor_distance))
         self.move(force.item() * 5)
         self.rotate(angle.item() / 5)
+        self.update_reward()
 
     def reward(self):
         current_pos = Vec2d(self.car_body.position)
         initial_pos = Vec2d(self.init_position)
-        return (current_pos - initial_pos).length
+        rewards = (current_pos - initial_pos).length
+        return rewards
 
     def reset(self):
         self.car_body.position = self.init_position
@@ -211,3 +216,11 @@ class Car:
             if self.sensor_visible is True:
                 self.sensors[i][1].unsafe_set_endpoints(
                     (0, 0), self.sensor_distance[i] * sensor_direction)
+
+    def is_loitering(self):
+        if self.reward() <= self.reward_val:
+            self.car_collided = True
+
+    def update_reward(self):
+        if self.reward() > self.reward_val:
+            self.reward_val = self.reward()
