@@ -9,6 +9,10 @@ So for this we created 10 cars at each epoch and assigned random neural networks
 
 For experimenting and playing with it run `window.py`.
 
+Check out the youtube video below:
+
+[![Self_Driving_Car](https://github.com/Bibyutatsu/Self_Driving_Car/blob/master/Assets/Thumbnail.png)](https://youtu.be/2I3c24-mOZI
+)
 
 ## Dependencies
 - Pymunk
