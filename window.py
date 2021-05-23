@@ -1,3 +1,9 @@
+# title: window.py
+# v: 2021-05-23T1448 AU
+# Updates:
+# * color
+# * time_step -> decrease
+
 import pyglet
 import pymunk
 from pymunk.pyglet_util import DrawOptions
@@ -7,6 +13,7 @@ from utils import car_model_management, car_reset
 from car import Car
 from ai import GA
 
+##################################################
 # Environment Variables
 HEIGHT = 720
 WIDTH = 1280
@@ -14,24 +21,35 @@ THICKNESS = 100
 STROKE = 1
 MOUSE_pressed = False
 BUTTON_pressed = []
-POPULATION = 10
 FPS = 60
+# AI variables
+POPULATION = 10
 
+##################################################
 # Pyglet
 window = pyglet.window.Window(WIDTH, HEIGHT, "Tester", resizable=False)
 options = DrawOptions()
 
+##################################################
 # Pymunk
 space = pymunk.Space()
 environment = create_level_1(space, HEIGHT, WIDTH, THICKNESS, STROKE)
 
+##################################################
+# AI
 ai_handle = GA(POPULATION)
-cars = [Car(
-    space,
-    THICKNESS + THICKNESS // 2,
-    HEIGHT - 3 * THICKNESS // 2,
-    i + 10,
-    environment) for i in range(POPULATION)]
+
+##################################################
+# Cars
+cars = [
+	Car(
+		space
+		, THICKNESS + THICKNESS // 2
+		, HEIGHT - 3 * THICKNESS // 2
+		, i + 10
+		, environment
+	) for i in range(POPULATION)
+	]
 car_model_management(cars, ai_handle)
 collided = []
 
@@ -67,7 +85,8 @@ def on_mouse_release(x, y, button, modifiers):
 
 time_counter = 0
 collided = []
-time_step = 5  # In seconds
+# time_step = 5  # In seconds # original
+time_step = 10 # In seconds # QC # 2021-05-21T1448 AU
 epoch = 1
 epoch_to_show = pyglet.text.Label(
     'Epoch: {0}'.format(epoch),
@@ -108,8 +127,12 @@ def update(dt):
                 collided.append(i)
 
     if time_counter >= FPS * time_step or len(collided) == POPULATION:
-        if epoch % 5 == 0:
-            time_step += 5
+		# give more time for each new epoch
+#        if epoch % 5 == 0:
+#            time_step += 5
+		# update: give less time for each tenth epoch
+        if epoch % 10 == 0:
+            time_step -= 1
         print("Epoch: ", epoch, " Reward stats: ", ai_handle.evolve_iter(
             cars,
             best_model_path=('./Model', epoch)))
