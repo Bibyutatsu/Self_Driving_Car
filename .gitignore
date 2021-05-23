@@ -106,5 +106,5 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# models # 2021-05-23T1455 AU
-Model/
+# models # 2021-05-23T1825 AU
+Model/*.pth 
