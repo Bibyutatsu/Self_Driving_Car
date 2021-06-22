@@ -1,3 +1,8 @@
+# v: 2021-05-23T1343 AU
+# Issue: "ai.py:51: UserWarning: nn.init.kaiming_normal is now deprecated in favor of nn.init.kaiming_normal_."
+# Resolution: renamed `kaiming_normal` to `kaiming_normal_`
+
+
 import torch.nn as nn
 import torch
 import random
@@ -48,7 +53,7 @@ class Model(nn.Module):
             if tensor.size() not in self.add_tensors:
                 self.add_tensors[tensor.size()] = torch.Tensor(tensor.size())
             if 'weight' in name:
-                nn.init.kaiming_normal(tensor)
+                nn.init.kaiming_normal_(tensor)
             else:
                 tensor.data.zero_()
 
